@@ -4,9 +4,20 @@ KANGOS_RELEASE_VERSION = PREVIEW
 KANGOS_BUILD_TYPE ?= UNOFFICIAL
 KANGOS_BUILD_VARIANT := VANILLA
 
-ifeq ($(WITH_GAPPS), true)
-    KANGOS_BUILD_VARIANT := GAPPS
-    $(call inherit-product, vendor/gapps/common/common-vendor.mk)
+# Gapps
+ifeq ($(WITH_GAPPS),true)
+$(call inherit-product, vendor/gapps/config.mk)
+KANGOS_BUILD_VARIANT := GAPPS
+
+# Common Overlay
+DEVICE_PACKAGE_OVERLAYS += \
+    vendor/kangos/overlay-gapps/common
+
+# Exclude RRO Enforcement
+PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS +=  \
+    vendor/kangos/overlay-gapps
+
+$(call inherit-product, vendor/kangos/config/rro_overlays.mk)
 endif
 
 # KangOS Release
