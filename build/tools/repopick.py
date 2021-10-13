@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 # Copyright (C) 2013-15 The CyanogenMod Project
+#           (C) 2017    The LineageOS Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -152,12 +153,12 @@ def fetch_query(remote_url, query):
         raise Exception('Gerrit URL should be in the form http[s]://hostname/ or ssh://[user@]host[:port]')
 
 if __name__ == '__main__':
-    # Default to ArrowOS Gerrit
-    default_gerrit = 'https://review.arrowos.net'
+    # Default to LineageOS Gerrit
+    default_gerrit = 'https://review.lineageos.org'
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=textwrap.dedent('''\
         repopick.py is a utility to simplify the process of cherry picking
-        patches from CyanogenMod's Gerrit instance (or any gerrit instance of your choosing)
+        patches from LineageOS's Gerrit instance (or any gerrit instance of your choosing)
 
         Given a list of change numbers, repopick will cd into the project path
         and cherry pick the latest patch available.
@@ -249,7 +250,7 @@ if __name__ == '__main__':
     #{project: {path, revision}}
 
     for project in projects:
-        name = ("ArrowOS/")+project.get('name')
+        name = project.get('name')
         path = project.get('path')
         revision = project.get('revision')
         if revision is None:
@@ -365,10 +366,6 @@ if __name__ == '__main__':
             project_path = project_name_to_data[item['project']][item['branch']]
         elif args.path:
             project_path = args.path
-        elif item['project'] in project_name_to_data and len(project_name_to_data[item['project']]) == 1:
-            local_branch = list(project_name_to_data[item['project']])[0]
-            project_path = project_name_to_data[item['project']][local_branch]
-            print('WARNING: Project {0} has a different branch ("{1}" != "{2}")'.format(project_path, local_branch, item['branch']))
         elif args.ignore_missing:
             print('WARNING: Skipping {0} since there is no project directory for: {1}\n'.format(item['id'], item['project']))
             continue
@@ -391,11 +388,7 @@ if __name__ == '__main__':
         for i in range(0, check_picked_count):
             if subprocess.call(['git', 'cat-file', '-e', 'HEAD~{0}'.format(i)], cwd=project_path, stderr=open(os.devnull, 'wb')):
                 continue
-            output = subprocess.check_output(['git', 'show', '-q', 'HEAD~{0}'.format(i)], cwd=project_path)
-            # make sure we have a string on Python 3
-            if isinstance(output, bytes):
-                output = output.decode('utf-8')
-            output = output.split()
+            output = subprocess.check_output(['git', 'show', '-q', 'HEAD~{0}'.format(i)], cwd=project_path).split()
             if 'Change-Id:' in output:
                 head_change_id = ''
                 for j,t in enumerate(reversed(output)):
@@ -426,9 +419,9 @@ if __name__ == '__main__':
                 print('Trying to fetch the change from GitHub')
 
             if args.pull:
-                cmd = ['git pull --no-edit arrow', item['fetch'][method]['ref']]
+                cmd = ['git pull --no-edit github', item['fetch'][method]['ref']]
             else:
-                cmd = ['git fetch arrow', item['fetch'][method]['ref']]
+                cmd = ['git fetch github', item['fetch'][method]['ref']]
             if args.quiet:
                 cmd.append('--quiet')
             else:
@@ -461,7 +454,7 @@ if __name__ == '__main__':
                 sys.exit(result)
         # Perform the cherry-pick
         if not args.pull:
-            cmd = ['git cherry-pick FETCH_HEAD']
+            cmd = ['git cherry-pick --ff FETCH_HEAD']
             if args.quiet:
                 cmd_out = open(os.devnull, 'wb')
             else:
@@ -481,6 +474,6 @@ if __name__ == '__main__':
                     sys.exit(result)
                 else:
                     print('ERROR: git command failed')
-                sys.exit(result)
+                    sys.exit(result)
         if not args.quiet:
             print('')
