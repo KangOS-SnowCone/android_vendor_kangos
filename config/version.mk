@@ -7,7 +7,7 @@ KANGOS_BUILD_VARIANT := VANILLA
 
 # Gapps
 ifeq ($(WITH_GAPPS),true)
-$(call inherit-product, vendor/gapps/config.mk)
+$(call inherit-product, vendor/gms/gms_full.mk)
 KANGOS_BUILD_VARIANT := GAPPS
 
 # Common Overlay
